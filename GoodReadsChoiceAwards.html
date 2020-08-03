@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<!-- <style> rect {fill: lightblue; stroke: black; }</style> -->
+<!--  Yasaman Sabersheikh  -->
+<style> rect {stroke: black; }</style>
+
+<head>
+<title>Narrative Visualization</title>
+<style>
+
+/* Style the body */
+body {
+  font-family: Garamond;
+}
+
+/* Header/Logo Title */
+.header {
+  padding: 1px;
+  text-align: center;
+  background: #C0C0C0;
+  color: white;
+  font-size: 14px;
+  font-family:Garamond;
+}
+
+.axisx { font: 12px Garamond; }
+.axisy { font: 12px Garamond; }
+.axislabel { 
+	font: 12px Garamond; 
+	font-weight: bold;
+}
+
+.infonote
+{ 
+	font: 12px Garamond; 
+	font-weight: bold;
+}
+.tooltip1 { 
+	font: 12px Garamond; 
+	font-weight: bold;
+	transition: 0.3s;
+	opacity: 0;
+}
+.tooltip2 { 
+	font-family: Garamond; 
+	font-weight: bold;
+	text-align: left;125px;
+    background: #eee;
+	border-radius: 1px;
+	color: black;
+	padding: 8px;
+	font-size: 12px;
+	content: "\25BC";
+	display: inline;
+	box-sizing: border-box;
+    box-shadow: 0 0 5px #999999;  
+	opacity: 0;
+	position: absolute;
+	transition: 0.3s;
+	
+}
+
+select {
+  font-family: Garamond;
+}
+
+div.content p{
+    text-align: center;
+	color: CadetBlue;
+	font-weight: bold;
+	font-size: 18px;
+}
+.label1 { 
+	font: Garamond; 
+	font-weight: bold;
+	font-size: 10px;
+}
+.label2 { 
+	font: Garamond; 
+	font-weight: bold;
+	font-size: 10px;
+}
+
+/* Page Content */
+.content {padding:0px;}
+
+.to-from-lines { stroke: #4EA234; stroke-width: 4px; }
+
+#info-sidebar-container {
+  position: absolute; top: 225px; right: 20px; left: 800px;
+  width: 250px;
+  height 700px;
+  border-style: ridge;
+  font: Garamond; 
+  font-weight: bold;
+  font-size: 14px;
+  padding: 5px;
+  color: #2C2E2C;
+  background: 	#C1F2C5;
+  margin-right:30em;
+}
+#info-sidebar-container p { 
+text-align: left; 
+}
+
+.axis {
+	font: 10px Garamond;
+}
+
+
+.x.axis path {
+      display: none;
+}
+    
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #D4D8DA;
+  stroke-width: 2px;
+  shape-rendering: crispEdges;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.focus circle {
+  fill: #F1F3F3;
+  stroke: #6F257F;
+  stroke-width: 5px;
+}
+  
+.hover-line {
+  stroke: #6F257F;
+  stroke-width: 2px;
+  stroke-dasharray: 3,3;
+}
+  
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+
+.grid line {
+  stroke: lightgrey;
+  stroke-opacity: 0.7;
+  shape-rendering: crispEdges;
+}
+
+.grid path {
+  stroke-width: 0;
+}
+
+</style>
+
+<body onload='init()'>
+
+
+<div class="header">
+  <h2 font-family: "Garamond">I do believe something magical can happen when you read a good book!</h2>
+  <p text-align ="center-right">J.K. Rowling</p>
+</div>
+
+<div class="content"> 
+  <p id = "pagetitle">GoodReads Choice Awards</p> 
+  <label id= "label1" for="selectYear" style="font-family:Garamond; color:gray;font-size:14px;font-weight:bold;margin-left:30em">Award Year</label>
+  <select id="selectYear"></select>  
+  <label id="label2" for="selectCat"  style="font-family:Garamond;color:gray;font-size:14px;font-weight:bold; text-align: right;margin-left:17em" >Award Category</label>
+  <select id="selectCat"></select>
+</div>
+
+<svg width="98%" height="575" id="svg1">
+<text x="45%" y="27" fill="gray" font-weight="bold" font-family="Garamond" font-size="16px" text-align="center">Award Winners</text> 
+</svg>
+<div id="info-sidebar-container" width="300" height="500" ></div>
+<script>
+
+async function init() {
+
+const data = await d3.csv( "https://yasiss.github.io/GoodReadsAward2.csv");
+
+var margin_m = {left:10, right:50, top:10, bottom:15}; //10
+var width = 300;
+var height = 300;
+
+var allGroup = d3.map(data, function(d){return(d.year)}).keys().sort(d3.descending);	
+					   
+var allCat = d3.map(data, function(d){return(d.category)}).keys();	
+
+d3.select("#selectYear")
+                      .selectAll('option')
+     	              .data(allGroup)
+                      .enter()
+    	              .append('option')
+                      .text(function (d) { return d; }); // text showed in the menu
+
+d3.select("#selectCat")
+                      .selectAll('option')
+     	              .data(allCat)
+                      .enter()
+    	              .append('option')
+                      .text(function (d) { return d; });
+
+
+var canvas = d3.select("#svg1")
+		 .attr("transform", "translate(" +margin_m.left+ "," + margin_m.top+ ")") 
+	     .attr("style", "outline: thin solid red;")
+	     .style("background-color", "#E8E8E8");
+		 
+var tooltip1 = d3.select('body').append('div')
+				.attr("class","tooltip1")
+				.style('position', 'absolute')
+				.style('color', "#2E8B57")
+				.style('opacity', "0")
+				.style('font-weight', "bold");
+				
+var tooltip2 = d3.select('body').append('div')
+				.attr("class","tooltip2")
+				.style('position', 'absolute');		
+				
+//*************************************************************************************************************************
+var sidebarContainer = d3.select("#info-sidebar-container")
+						.attr("transform", "translate(" +(margin_m.left+300)+ "," +(margin_m.top-10)+ ")") 
+						
+var rankText = sidebarContainer.append("p").attr("id", "rank-text");
+var votesText = sidebarContainer.append("p").attr("id", "votes-text");
+var titleText = sidebarContainer.append("p").attr("id", "title-text");
+var categoryText = sidebarContainer.append("p").attr("id", "category-text");
+var yearWinText = sidebarContainer.append("p").attr("id", "year-win-text");
+var authorsText = sidebarContainer.append("p").attr("id", "authors-text");
+var avg_ratingText = sidebarContainer.append("p").attr("id", "avg-rating-text");
+var pagesText = sidebarContainer.append("p").attr("id", "pages-text");
+var publishedDateText = sidebarContainer.append("p").attr("id", "published-text");
+var publisherText = sidebarContainer.append("p").attr("id", "publisher-text");
+var FistarsText = sidebarContainer.append("p").attr("id", "5stars-text");
+var FotarsText = sidebarContainer.append("p").attr("id", "4stars-text");
+var ThstarsText = sidebarContainer.append("p").attr("id", "3stars-text");
+var TwstarsText = sidebarContainer.append("p").attr("id", "2stars-text");
+var OstarsText = sidebarContainer.append("p").attr("id", "1stars-text");
+
+var formatDate = d3.timeFormat("%Y-%m-%d").parse;	
+
+var xLine = canvas.append("line").attr("class", "y-hover-line hover-line");
+//*************************************************************************************************************************				
+				
+function draw(mydata) { 
+
+var margin = {left:275, right:5, top:45, bottom:10};
+var margin2 = 100;
+var width2 = 300;
+var height2 = 450;
+
+var x = d3.scaleLinear()//.base(10)
+   	  .domain([20,70000])
+      .range([0,width2]);
+	      
+var y = d3.scaleBand()
+		//.domain(d3.map(data, function(d){return(d.title);}).keys());
+	    .domain(mydata.map(function(d) { return d.title;}))
+		.range([0,height2])
+		//padding([0.2]);
+	
+var xAxis = d3.axisBottom(x).ticks(10).tickArguments([5,".0s"]);
+var yAxis = d3.axisLeft(y).tickSize(0).ticks(20);	
+
+
+//bind data to rects  
+var bars = canvas.append("g" )
+					.attr("transform", "translate(" + margin.left + "," + margin.top + ")") 
+					.selectAll("rect")
+					.data(mydata)
+					.enter().append("rect")
+					.attr("fill", "lightblue")
+					.attr("y",function(d) { return y(d.title) + margin.left; })
+					.attr("x",function(d) { return parseInt(x(d.votes)); });					
+//					.attr("x",function(d,i) { return x(i); })
+//					.attr("y",function(d) { return y(d); });
+ 
+ 
+//bars.attr("width",y.bandwidth());
+ 			
+d3.select("svg").append("g")
+	.attr("class", "axisy")
+    .attr("transform", "translate(" +margin.left+ "," + (margin.top)+ ")")
+    .call(yAxis)
+	.selectAll("text")
+    //.attr("transform", "rotate(15,-10,10)")
+	.style("text-anchor", "end")//start middle
+	.style("textAlign", "start")//start middle	
+    .attr("dy", "-0.25em")  
+	.attr("dx", "-0.75em")  
+    .call(wrap, 250) ;//y.bandwidth()+ 
+	
+d3.select("svg").append("g")
+	.attr("class", "axisx")
+    .attr("transform", "translate(" + margin.left+ "," + (height2+margin.top) + ")")
+    .call(xAxis)
+    .selectAll("text")	
+    .style("text-anchor", "end")
+    .attr("dx", "-.8em")
+    .attr("dy", ".15em")
+    .attr("transform","rotate(-90)")
+
+d3.selectAll("rect")
+	.transition()
+    .duration(1000)
+    .delay(function(d, i) { return i * 10; })
+	.attr("height", y.bandwidth()-4)   // y.bandwidth())
+    .attr("width", function(d) { return parseInt(x(d.votes)); })
+	.attr("y",function(d) {return y(d.title);})
+    .attr("x",1);	
+	//.attr("height", function(d) { return height2 - y(d); })
+  //  .attr("y", function(d) { return y(d); });
+
+var bars = canvas.selectAll("rect")
+        .attr("class", "bar");
+
+//****************************************************************************		
+
+var bisectVotes = d3.bisectLeft(function(d) { return d.votes; }).left;
+
+// Define the line
+//var line = d3.line()
+//   .x(function(d) { return x(parseInt(d.votes)); })
+ //  .y(function(d) { return y(parseInt(d.rank))*20; });
+	
+
+//var lineSvg = canvas.append("g")
+ //   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	
+//var focus = canvas.append("g")                               
+  //  .style("display", "none"); 	
+	
+//var xLine = canvas.append("line").attr("class", "y-hover-line hover-line");	
+
+// Add the line path.
+//    lineSvg.append("path") 
+		//.data(mydata)
+ //       .attr("class", "line")
+ //       .attr("d", line(mydata));
+		
+ // focus.append("line")
+ //     .classed("x", true)
+
+// append the circle at the intersection               
+ /*   focus.append("circle")                                
+        .attr("class", "y")                              
+        .style("fill", "none")                          
+        .style("stroke", "blue")                         
+        .attr("r", 4);     
+
+
+    focus.append("line")
+        .attr("class", "x-hover-line hover-line")
+        .attr("y1", 0)
+        .attr("y2", height2);
+
+    focus.append("text")
+        .attr("x", 15)
+      	.attr("dy", ".31em");
+*/
+		
+	//drawLines(mydata);			
+		
+canvas.append("text")    
+	  .attr("class","axislabel")
+      .attr("transform",
+            "translate(" + (width2/2+margin.left) + " ," + 
+                           (height2 + margin.top + 50) + ")")
+      .style("text-anchor", "middle")
+      .text("Number of Votes");		
+	  
+	  
+canvas.append("text") 
+	  .attr("class","noteinfo")
+      .attr("transform","translate(" + (width2+margin.left+50) + " ," + (height2 + margin.top + 70) + ")")
+	  .style('fill', 'red')
+      .text("(If the chart is blank after dropdown changes, the category did not exist in that year )");  
+
+canvas.append("text") 
+	  .attr("class","mybutton")
+      .attr("transform","translate(" + (width2+margin.left+500) + " ," + (margin.top + 20) + ")")
+	  .style('fill', 'grey')
+      .text("Clear the box here!")
+	  .on("click", function() {
+	  clearText(); 
+	  d3.select(".tooltip1").remove();
+	  })
+	  .on("mouseover", function(d) {
+        d3.select(this).style("cursor", "pointer");});
+
+// bars.attr("fill", function(d, i) {
+        //    return rainbow(i);
+      //  })
+	bars.attr("fill","lightblue")
+        .attr("id", function(d, i) {
+            return i;
+        })
+	.on("mouseover", function(d) {
+        tooltip1.html(d)
+        //.style('left', (parseInt(d3.select(this).attr("width")) + 50) + "px")
+		.style('left', (margin.left +20 )+"px")
+        .style('top',  (parseInt(d3.select(this).attr("y"))+ margin.top+190) + "px");
+           //d3.select(this).style("fill", function() {return d3.rgb(d3.select(this).style("fill")).darker(0.2);
+	    tooltip1.transition().duration(1000).style('opacity', 1).text("Rank " +d.rank);
+		d3.select(this).attr("fill", "lightgrey");
+		//drawLines();
+		   
+    })
+	
+	.on("mousemove", function(d) {
+        tooltip1.html(d)
+       // .style('left', (parseInt(d3.select(this).attr("width")) + margin.left-100) + "px")
+		.style('left', (margin.left +20 )+"px")
+        .style('top',  (parseInt(d3.select(this).attr("y"))+ margin.top+190) + "px");
+			   //.style("top",  (d3.mouse(this)[1])+ margin + "px")
+             //  .style("left", (d3.mouse(this)[0]) + margin +"px")
+           //d3.select(this).style("fill", function() {return d3.rgb(d3.select(this).style("fill")).darker(0.2);
+	    tooltip1.transition().duration(750).style('opacity', 1).text("Rank " +d.rank);
+		d3.select(this).attr("fill", "lightgrey");
+		//drawLines();
+		   
+    })
+	
+	
+    .on("mouseout", function(d) {
+	            tooltip1.style('opacity', 0);  
+				d3.select(this).attr("fill","lightblue");
+				d3.select(".tooltip1").remove();
+				//clearText();
+				//function() {
+               // return "" + rainbow(this.id) + "";
+            //});
+	});
+
+//bars.on("mousemove", drawLines(mydata));
+
+bars
+	.on("mouseover", function(d) {tooltip2.style("opacity", 1)
+	                                      .style('left', (d3.event.pageX)+"px")
+                                          .style('top',  (d3.event.pageY)+"px")
+										  .html("Author: " +d.authors + "<br>"+" Votes: " +d.votes+ "<br>"+ " Avg Rating: " +d.avg_rating+ "<br>"+ " Rank: " +d.rank);
+										   d3.select(this).attr("fill", "lightgrey");
+										   tooltip2.transition().duration(1000).style('opacity', 1);
+										   addText(d);
+										 //  drawLines();
+	})   
+    .on("mouseout", function(d) {
+	            tooltip2.style('opacity', 0); 
+                d3.select(this).attr("fill","lightblue");
+				//clearText();
+			//	d3.select(this).attr("fill", function() {
+              //  return "" + rainbow(this.id) + "";
+    // });
+ });  
+
+function drawLines() {
+    // recover coordinate we need
+    var x0 = d3.mouse(this)[0];
+    var i = bisect(mydata, x0, 1);
+    var d0 = mydata[i - 1];
+    var d1 = mydata[i];
+    var d = x0 - d0.votes > d1.votes - x0 ? d1 : d0;
+	
+	 focus.attr("transform", "translate(" + x(d.year) + "," + y(d.value) + ")");
+     focus.select("text").text(function() { return d.value; });
+      focus.select(".x-hover-line").attr("y2", height2 - y(d.value));
+    //  focus.select(".y-hover-line").attr("x2", width2 + width2);
+}
+
+}	//draw function
+
+
+draw(data.filter(function(d) { return parseInt(d.year) == 2019; })
+		 .filter(function(d) { return d.category == "Best of the Best"; })
+);
+
+
+d3.select('#selectYear')
+  .on('change', function() {
+    var bars = canvas.selectAll("rect");
+    bars.remove(); 	
+	canvas.selectAll(".axisy").remove();
+	clearText();
+	d3.selectAll(".axisx").remove();
+	
+    var year = eval(d3.select('#selectYear').property('value'));
+    var cat  = d3.select("#selectCat").node().value; 
+	 
+var filteredData = data.filter(function(d) 
+{return (d.category == cat & parseInt(d.year) == parseInt(year));}
+)	
+		draw(filteredData);
+
+});	
+	
+d3.select('#selectCat')
+  .on('change', function() {
+    var bars = canvas.selectAll("rect");
+    bars.remove(); 	
+	canvas.selectAll(".axisy").remove();
+	clearText();
+	d3.selectAll(".axisx").remove();
+    var year = eval(d3.select('#selectYear').property('value'));
+    var cat  = d3.select("#selectCat").node().value; 
+    var filteredData = data.filter(function(d) 
+                       {return (d.category == cat & parseInt(d.year) == parseInt(year));}
+)	
+
+	draw(filteredData);
+
+});	
+
+
+function wrap(text, width) {
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 1,
+        lineHeight = 1.2, // ems
+		x = text.attr("x"),
+        y = text.attr("y"),
+		//dy = text.attr("dy") ? text.attr("dy") : 0;
+        dy = parseFloat(text.attr("dy")),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+//        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dx", "-0.75em").attr("dy", +lineNumber * lineHeight + dy + "em").text(word);		
+        tspan = text.append("tspan").attr("x", x).attr("y", y).attr("dy", +lineNumber * lineHeight + dy + "em").text(word);
+      }
+    }
+  });
+}
+
+// Reset X and L to from lines
+xLine.attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", 0);
+
+function addText(d) {
+titleText.text("Title: " + d.title);
+authorsText.text("Authors: " + d.authors);	
+publishedDateText.text("Published: " + d.published);
+publisherText.text("Publisher: " + d.publisher);
+pagesText.text("Pages: " + d.pages);	
+categoryText.text("Category: " + d.category);
+yearWinText.text("Year Won: " + d.year);
+rankText.text("Rank: " + d.rank );
+votesText.text("Votes: " + d.votes);
+avg_ratingText.text("Average Rating: " + d.avg_rating);
+FistarsText.text("5 Star reviews: " + d.fivestars);
+FotarsText.text("4 Star reviews: " + d.fourstars);
+ThstarsText.text("3 Star reviews: " + d.threestars);
+TwstarsText.text("2 Star reviews: " + d.twostars);
+OstarsText.text("1 Star reviews: " + d.onestars);
+}
+
+function clearText() {
+rankText.text("");
+votesText.text("");
+titleText.text("");
+categoryText.text("");
+yearWinText.text("");
+authorsText.text("");
+avg_ratingText.text("");
+pagesText.text("");
+publishedDateText.text("");
+publisherText.text("");
+FistarsText.text("");
+FotarsText.text("");
+ThstarsText.text("");
+TwstarsText.text("");
+OstarsText.text("");
+}
+
+}
+</script>
+
+</body>
+</html>
