@@ -544,16 +544,16 @@ function wrap(text, width) {
 xLine.attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", 0);
 
 function addText(d) {
-rankText.text("Rank: " + d.rank );
-votesText.text("Votes: " + d.votes);
 titleText.text("Title: " + d.title);
-categoryText.text("Category: " + d.category);
-yearWinText.text("Year Won: " + d.year);
-authorsText.text("Authors: " + d.authors);
-avg_ratingText.text("Average Rating: " + d.avg_rating);
-pagesText.text("Pages: " + d.pages);
+authorsText.text("Authors: " + d.authors);	
 publishedDateText.text("Published: " + d.published);
 publisherText.text("Publisher: " + d.publisher);
+pagesText.text("Pages: " + d.pages);	
+categoryText.text("Category: " + d.category);
+yearWinText.text("Year Won: " + d.year);
+rankText.text("Rank: " + d.rank );
+votesText.text("Votes: " + d.votes);
+avg_ratingText.text("Average Rating: " + d.avg_rating);
 FistarsText.text("5 Star reviews: " + d.fivestars);
 FotarsText.text("4 Star reviews: " + d.fourstars);
 ThstarsText.text("3 Star reviews: " + d.threestars);
