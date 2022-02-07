@@ -2,7 +2,7 @@
 
 Goodreads Readers award vizualization by book categories, using D3.js, HTML and CSS
 
-https://GoodReadsChoiceAwards/GoodReadsChoiceAwards.html
+https://yasiss.github.io/GoodReadsChoiceAwards/GoodReadsChoiceAwards.html
 
 
 The Visualization is done with
