@@ -1,4 +1,4 @@
-# yasiss.github.io
+# GoodReads Choice Awards Visualization
 
 Goodreads Readers award vizualization by book categories, using D3.js, HTML and CSS
 
