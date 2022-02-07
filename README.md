@@ -4,7 +4,7 @@ Goodreads Readers award vizualization by book categories, using D3.js, HTML and 
 
 GoodReads Choice Awards base on Category for years 2011-2019
 
-Data was downloaded from www.Goddreads.com
+Data was downloaded from https://www.goodreads.com/
 
 https://yasiss.github.io/GoodReadsChoiceAwards.html
 
